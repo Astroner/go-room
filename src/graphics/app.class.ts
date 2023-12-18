@@ -2,7 +2,7 @@ import * as THREE from "three";
 
 import { OrbitControls } from "three/examples/jsm/controls/OrbitControls";
 import { AssetType, AssetsManager } from "./assets-manager.class";
-import { GoScene } from "./go.scene";
+import { RoomScene } from "./room.scene";
 
 export class App {
     static CAMERA_DEFAULT_X_ROTATION = -.7;
@@ -13,17 +13,14 @@ export class App {
     static CAMERA_Y_ROTATION_AVAILABLE = Math.PI / 40;
     static CAMERA_Y_ROTATION_SPEED_RATIO = 0.015;
 
+    private mouse = new THREE.Vector2(.5, .5);
+
     private camera: THREE.PerspectiveCamera;
     private renderer: THREE.WebGLRenderer;
 
-    private assets = new AssetsManager({
-        room: {
-            type: AssetType.GLTF,
-            path: "/assets/room.glb"
-        }
-    });
-    
-    private mouse = new THREE.Vector2(.5, .5);
+    private raycaster = new THREE.Raycaster();
+        
+    private room: RoomScene | null = null;
 
     constructor(
         width: number,
@@ -38,64 +35,59 @@ export class App {
         this.renderer = new THREE.WebGLRenderer({ canvas, antialias: true });
         this.renderer.setClearColor(0xfe9380)
         this.renderer.setSize(width, height)
-    }
-
-    async loadAssets() {
-        await this.assets.load();
+        this.renderer.shadowMap.enabled = true;
     }
 
     start() {
         return new Promise<void>(async (resolve, reject) => {
-            await this.loadAssets();
             const scene = new THREE.Scene();
 
-            const goScene = await GoScene.create();
-            scene.add(goScene);
+            this.room = await RoomScene.create(this.raycaster);
+            scene.add(this.room);
 
-            const room = this.assets.getAsset("room");
-            scene.add(room.scene);
-    
             // const controls = new OrbitControls(this.camera, this.renderer.domElement);
 
             let once = false;
             this.renderer.setAnimationLoop((data, ss) => {
-                
                 this.renderer.render(scene, this.camera);
                 if(!once) {
                     once = true;
                     resolve();
                 }
-
-
-                {
-                    let targetAngle;
-                    if(this.mouse.y < .2 || this.mouse.y > .8) {
-                        targetAngle = App.CAMERA_DEFAULT_X_ROTATION + (this.mouse.y * -2 + 1) * App.CAMERA_X_ROTATION_AVAILABLE;
-                    } else {
-                        targetAngle = App.CAMERA_DEFAULT_X_ROTATION;
-                    }
-
-                    const diff = targetAngle - this.camera.rotation.x;
-
-                    this.camera.rotation.x += diff * App.CAMERA_X_ROTATION_SPEED_RATIO;
-                }
-
-                {
-                    let targetAngle;
-                    if(this.mouse.x < .2 || this.mouse.x > .8) {
-                        targetAngle = App.CAMERA_DEFAULT_Y_ROTATION + (this.mouse.x * -2 + 1) * App.CAMERA_Y_ROTATION_AVAILABLE;
-                    } else {
-                        targetAngle = App.CAMERA_DEFAULT_Y_ROTATION;
-                    }
-
-                    const diff = targetAngle - this.camera.rotation.y;
-
-                    this.camera.rotation.y += diff * App.CAMERA_Y_ROTATION_SPEED_RATIO;
-                }
     
+                this.tick();
+
                 // controls.update();
             })
         })
+    }
+
+    private tick(){
+        {
+            let targetAngle;
+            if(this.mouse.y < .2 || this.mouse.y > .8) {
+                targetAngle = App.CAMERA_DEFAULT_X_ROTATION + (this.mouse.y * -2 + 1) * App.CAMERA_X_ROTATION_AVAILABLE;
+            } else {
+                targetAngle = App.CAMERA_DEFAULT_X_ROTATION;
+            }
+
+            const diff = targetAngle - this.camera.rotation.x;
+
+            this.camera.rotation.x += diff * App.CAMERA_X_ROTATION_SPEED_RATIO;
+        }
+
+        {
+            let targetAngle;
+            if(this.mouse.x < .2 || this.mouse.x > .8) {
+                targetAngle = App.CAMERA_DEFAULT_Y_ROTATION + (this.mouse.x * -2 + 1) * App.CAMERA_Y_ROTATION_AVAILABLE;
+            } else {
+                targetAngle = App.CAMERA_DEFAULT_Y_ROTATION;
+            }
+
+            const diff = targetAngle - this.camera.rotation.y;
+
+            this.camera.rotation.y += diff * App.CAMERA_Y_ROTATION_SPEED_RATIO;
+        }
     }
 
     stop() {
@@ -110,5 +102,11 @@ export class App {
 
     setMouse(x: number, y: number) {
         this.mouse.set(x, y);
+
+        this.raycaster.setFromCamera(new THREE.Vector2(this.mouse.x * 2 - 1, this.mouse.y * -2 + 1), this.camera);
+
+        if(this.room) {
+            this.room.mouseChange();
+        }
     }
 }
