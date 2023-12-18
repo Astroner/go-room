@@ -71,7 +71,7 @@ export class App {
                     let targetAngle;
                     if(this.mouse.y < .2 || this.mouse.y > .8) {
                         targetAngle = App.CAMERA_DEFAULT_X_ROTATION + (this.mouse.y * -2 + 1) * App.CAMERA_X_ROTATION_AVAILABLE;
-                    } else { 
+                    } else {
                         targetAngle = App.CAMERA_DEFAULT_X_ROTATION;
                     }
 
