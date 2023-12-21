@@ -16,15 +16,15 @@ const assets = createAssets({
     chair: {
         type: AssetType.GLTF,
         path: "/assets/chair.glb"
+    },
+    placeStone: {
+        type: AssetType.AUDIO,
+        path: "/assets/place-stone.mp3"
     }
 })
 
 export class GoScene extends PreloadableScene({ assets, dependencies: [StoneScene, PendingStoneScene] }) {
-    static async create(raycaster: THREE.Raycaster) {
-        await GoScene.preload();
-
-        return new GoScene(raycaster);
-    }
+    static DEBUGGING = false;
 
     private pendingStone = new PendingStoneScene();
     
@@ -38,6 +38,8 @@ export class GoScene extends PreloadableScene({ assets, dependencies: [StoneScen
         y: 0
     }; 
 
+    private placeStoneTrack: THREE.Audio;
+
     constructor(private raycaster: THREE.Raycaster) {
         super();
 
@@ -45,13 +47,26 @@ export class GoScene extends PreloadableScene({ assets, dependencies: [StoneScen
         this.add(this.pendingStone);
 
         const { scene: desk } = GoScene.assets.getAsset("desk");
+        
+        const plane = desk.children.find((item): item is THREE.Mesh<THREE.BufferGeometry, THREE.MeshStandardMaterial> => item.name === "desk" && item instanceof THREE.Mesh && item.material instanceof THREE.MeshStandardMaterial)
+        if(!plane) {
+            throw new Error("Failed to load desk");
+        }
+        plane.receiveShadow = true;
+
         this.add(desk);
 
-        const board = GoScene.assets.getAsset("goBoard").scene;
+        const { scene: board } = GoScene.assets.getAsset("goBoard");
 
         for(const child of board.children) {
             if(child instanceof THREE.Mesh && child.material instanceof THREE.MeshStandardMaterial) {
-                if(child.name !== "board") child.material.visible = false;
+                if(child.name !== "board") {
+                    if(GoScene.DEBUGGING) {
+                        child.material.wireframe = true;
+                    } else {
+                        child.material.visible = false;
+                    }
+                }
 
                 if(child.name === "big") {
                     this.bigBoard = child;
@@ -60,7 +75,7 @@ export class GoScene extends PreloadableScene({ assets, dependencies: [StoneScen
                     this.smallBoard = child;
                 } else if(child.name === "board") {
                     child.receiveShadow = true;
-                    // child.castShadow = true;
+                    child.castShadow = true;
                 }
             } else {
                 throw new Error("Unexpected object");
@@ -75,6 +90,11 @@ export class GoScene extends PreloadableScene({ assets, dependencies: [StoneScen
         const { scene: chair } = GoScene.assets.getAsset("chair");
         chair.position.set(0, 0, -5);
         this.add(chair);
+
+        const listener = new THREE.AudioListener();
+        this.placeStoneTrack = new THREE.Audio(listener);
+        this.placeStoneTrack.setBuffer(GoScene.assets.getAsset("placeStone"));
+        this.placeStoneTrack.setVolume(.1);
     }
 
     mouseClick() {
@@ -84,6 +104,8 @@ export class GoScene extends PreloadableScene({ assets, dependencies: [StoneScen
         
         this.isWhite = !this.isWhite;
         this.pendingStone.setColor(this.isWhite ? "white" : "black");
+
+        this.placeStoneTrack.play();
     }
 
     updateMouse() {

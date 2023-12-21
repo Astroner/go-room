@@ -1,11 +1,12 @@
-import { Object3D, Texture, TextureLoader } from "three"
+import { Object3D, Texture, TextureLoader, AudioLoader } from "three"
 import { OBJLoader } from "three/examples/jsm/loaders/OBJLoader";
 import { GLTFLoader, GLTF } from "three/examples/jsm/loaders/GLTFLoader";
 
 export enum AssetType {
     OBJ,
     TEXTURE,
-    GLTF
+    GLTF,
+    AUDIO
 };
 
 export type Asset = {
@@ -16,7 +17,8 @@ export type Asset = {
 export type AssetTypeToResult = {
     [AssetType.OBJ]: Object3D,
     [AssetType.TEXTURE]: Texture,
-    [AssetType.GLTF]: GLTF
+    [AssetType.GLTF]: GLTF,
+    [AssetType.AUDIO]: AudioBuffer
 }
 
 type MapAssets<Assets extends Record<string, Asset>> = {
@@ -31,6 +33,7 @@ type Loaders = {
 const textureLoader = new TextureLoader();
 const objLoader = new OBJLoader()
 const gltfLoader = new GLTFLoader();
+const audioLoader = new AudioLoader();
 const loaders: Loaders = {
     [AssetType.OBJ]: (path) => new Promise((res, rej) => {
         objLoader.load(
@@ -48,7 +51,8 @@ const loaders: Loaders = {
             rej
         )
     }),
-    [AssetType.GLTF]: path => new Promise((res, rej) => gltfLoader.load(path, res, undefined, rej))
+    [AssetType.GLTF]: path => new Promise((res, rej) => gltfLoader.load(path, res, undefined, rej)),
+    [AssetType.AUDIO]: path => new Promise((res, rej) => audioLoader.load(path, res, undefined, rej))
 }
 
 

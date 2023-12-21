@@ -30,7 +30,7 @@ export class App {
         canvas: HTMLCanvasElement,
     ) {
         if(App.DEBUGGING) {
-            RoomScene.DEBUGGER = true;
+            RoomScene.DEBUGGING = true;
         }
 
         this.camera = new THREE.PerspectiveCamera(45, width / height);

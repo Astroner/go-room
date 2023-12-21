@@ -12,7 +12,7 @@ const assets = createAssets({
 })
 
 export class RoomScene extends PreloadableScene({ assets, dependencies: [GoScene] }) {
-    static DEBUGGER = false;
+    static DEBUGGING = false;
 
     static async create(rayCaster: THREE.Raycaster) {
         await RoomScene.preload()
@@ -22,8 +22,11 @@ export class RoomScene extends PreloadableScene({ assets, dependencies: [GoScene
 
     private goScene: GoScene;
 
-    constructor(private rayCaster: THREE.Raycaster) {
+    constructor(rayCaster: THREE.Raycaster) {
         super();
+        if(RoomScene.DEBUGGING) {
+            GoScene.DEBUGGING = true;
+        }
 
         this.goScene = new GoScene(rayCaster);
         this.add(this.goScene);
@@ -44,7 +47,7 @@ export class RoomScene extends PreloadableScene({ assets, dependencies: [GoScene
 
 
 
-        if(RoomScene.DEBUGGER) {
+        if(RoomScene.DEBUGGING) {
             const helper = new THREE.CameraHelper(projector.shadow.camera);
             this.add(helper);
         }
