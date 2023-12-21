@@ -2,6 +2,7 @@ import * as THREE from "three";
 import { AssetType } from "./assets-manager.class";
 import { PreloadableScene, createAssets } from "./preloadable-scene.class";
 import { StoneScene } from "./stone.scene";
+import { PendingStoneScene } from "./pending-stone.scene";
 
 const assets = createAssets({
     goBoard: {
@@ -18,14 +19,14 @@ const assets = createAssets({
     }
 })
 
-export class GoScene extends PreloadableScene({ assets, dependencies: [StoneScene] }) {
+export class GoScene extends PreloadableScene({ assets, dependencies: [StoneScene, PendingStoneScene] }) {
     static async create(raycaster: THREE.Raycaster) {
         await GoScene.preload();
 
         return new GoScene(raycaster);
     }
 
-    private pendingStone = new StoneScene();
+    private pendingStone = new PendingStoneScene();
     
     private bigBoard!: THREE.Mesh;
     private smallBoard!: THREE.Mesh;
@@ -43,24 +44,29 @@ export class GoScene extends PreloadableScene({ assets, dependencies: [StoneScen
         this.pendingStone.visible = false;
         this.add(this.pendingStone);
 
-        const desk = GoScene.assets.getAsset("desk");
-        this.add(desk.scene);
+        const { scene: desk } = GoScene.assets.getAsset("desk");
+        this.add(desk);
 
         const board = GoScene.assets.getAsset("goBoard").scene;
 
         for(const child of board.children) {
-            if(child.name === "board") continue;
             if(child instanceof THREE.Mesh && child.material instanceof THREE.MeshStandardMaterial) {
-                child.material.visible = false;
+                if(child.name !== "board") child.material.visible = false;
+
                 if(child.name === "big") {
                     this.bigBoard = child;
                     this.boardBox = new THREE.Box3().setFromObject(child);
                 } else if(child.name === "small") {
                     this.smallBoard = child;
+                } else if(child.name === "board") {
+                    child.receiveShadow = true;
+                    // child.castShadow = true;
                 }
+            } else {
+                throw new Error("Unexpected object");
             }
         }
-
+        
         board.position.y = 6.35;
         board.scale.set(2, 2, 2);
         this.add(board);
@@ -98,7 +104,7 @@ export class GoScene extends PreloadableScene({ assets, dependencies: [StoneScen
             const newZ = this.gameData.y * segmentHeight;
 
             this.pendingStone.position.x = this.boardBox.min.x + newX;
-            this.pendingStone.position.y = boardIntersection.point.y;
+            this.pendingStone.position.y = boardIntersection.point.y + .05;
             this.pendingStone.position.z = this.boardBox.min.z + newZ;
         } else {
             this.pendingStone.visible = false;

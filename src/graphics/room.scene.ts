@@ -12,6 +12,8 @@ const assets = createAssets({
 })
 
 export class RoomScene extends PreloadableScene({ assets, dependencies: [GoScene] }) {
+    static DEBUGGER = false;
+
     static async create(rayCaster: THREE.Raycaster) {
         await RoomScene.preload()
 
@@ -33,11 +35,20 @@ export class RoomScene extends PreloadableScene({ assets, dependencies: [GoScene
         hemiLight.position.set(0, 20, 0);
         this.add(hemiLight);
 
-        const projector = new THREE.DirectionalLight(0xffffff);
-
-        projector.lookAt(new THREE.Vector3().setScalar(0))
-
+        const projector = new THREE.DirectionalLight(0xEDEAD4, 10);
+        projector.position.set(40, 20, 0);
+        projector.castShadow = true;
+        projector.target.position.y = 8;
         this.add(projector);
+        this.add(projector.target);
+
+
+
+        if(RoomScene.DEBUGGER) {
+            const helper = new THREE.CameraHelper(projector.shadow.camera);
+            this.add(helper);
+        }
+
     }
 
     mouseChange() {

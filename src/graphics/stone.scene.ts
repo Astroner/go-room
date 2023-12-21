@@ -11,7 +11,7 @@ const assets = createAssets({
 export class StoneScene extends PreloadableScene({ assets }) {
     private stone: THREE.Mesh<THREE.BufferGeometry, THREE.MeshStandardMaterial>;
 
-    constructor(color: "black" | "white" = "black") {
+    constructor(color: "black" | "white" = "black", transparent: boolean = false, disableShadow = false) {
         super();
 
         const mesh = StoneScene.assets.getAsset("stone").scene.children[0];
@@ -20,6 +20,11 @@ export class StoneScene extends PreloadableScene({ assets }) {
         }
 
         const material = mesh.material.clone();
+        if(transparent) {
+            material.transparent = true;
+            material.opacity = .3;
+        }
+
         if(color === "white") {
             material.color.set(0xffffff);
         } else {
@@ -27,6 +32,9 @@ export class StoneScene extends PreloadableScene({ assets }) {
         }
 
         this.stone = new THREE.Mesh(mesh.geometry, material);
+        if(!transparent && !disableShadow) {
+            this.stone.castShadow = true;
+        }
         this.stone.scale.setScalar(.2);
 
 

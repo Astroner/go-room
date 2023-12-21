@@ -29,6 +29,10 @@ export class App {
         height: number,
         canvas: HTMLCanvasElement,
     ) {
+        if(App.DEBUGGING) {
+            RoomScene.DEBUGGER = true;
+        }
+
         this.camera = new THREE.PerspectiveCamera(45, width / height);
         this.camera.position.set(0, 12, 6);
 
@@ -38,6 +42,7 @@ export class App {
         this.renderer.setClearColor(0xfe9380)
         this.renderer.setSize(width, height)
         this.renderer.shadowMap.enabled = true;
+        this.renderer.shadowMap.type = THREE.PCFSoftShadowMap;
     }
 
     start() {
