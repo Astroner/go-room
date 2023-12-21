@@ -1,6 +1,6 @@
 import * as THREE from "three";
 
-import { Asset, AssetsManager } from "./assets-manager.class";
+import { Asset, AssetsManager, AssetType } from "./assets-manager.class";
 
 interface Preloadable {
     preload(): Promise<unknown>
@@ -10,6 +10,10 @@ export type PreloadingConfig<Assets extends Record<string, Asset>> = {
     assets?: Assets,
     dependencies?: Preloadable[]
 }
+
+export { AssetType };
+
+export const createAssets = <Assets extends Record<string, Asset>>(assets: Assets): Assets => assets;
 
 export const PreloadableScene = <Assets extends Record<string, Asset>>(config: PreloadingConfig<Assets>) => class PreloadableScene extends THREE.Scene {
     static loading: Promise<unknown> | null = null;

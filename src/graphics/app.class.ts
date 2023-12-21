@@ -5,6 +5,8 @@ import { AssetType, AssetsManager } from "./assets-manager.class";
 import { RoomScene } from "./room.scene";
 
 export class App {
+    static DEBUGGING = false;
+
     static CAMERA_DEFAULT_X_ROTATION = -.7;
     static CAMERA_X_ROTATION_AVAILABLE = Math.PI / 30;
     static CAMERA_X_ROTATION_SPEED_RATIO = 0.015;
@@ -45,7 +47,7 @@ export class App {
             this.room = await RoomScene.create(this.raycaster);
             scene.add(this.room);
 
-            // const controls = new OrbitControls(this.camera, this.renderer.domElement);
+            const controls = App.DEBUGGING ? new OrbitControls(this.camera, this.renderer.domElement) : null;
 
             let once = false;
             this.renderer.setAnimationLoop((data, ss) => {
@@ -57,7 +59,7 @@ export class App {
     
                 this.tick();
 
-                // controls.update();
+                controls?.update();
             })
         })
     }
@@ -98,6 +100,10 @@ export class App {
         this.camera.aspect = width / height;
         this.camera.updateProjectionMatrix();
         this.renderer.setSize(width, height);
+    }
+
+    mouseClick() {
+        if(this.room) this.room.mouseClick();
     }
 
     setMouse(x: number, y: number) {

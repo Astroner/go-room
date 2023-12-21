@@ -63,6 +63,7 @@ const MainPage: FC = () => {
                 x: e.pageX / (e.target as HTMLDivElement).clientWidth,
                 y: e.pageY / (e.target as HTMLDivElement).clientHeight
             })}
+            onClick={() => app?.mouseClick()}
         >
             {
                 <div className={isVisible ? cn['placeholder--hidden'] : cn['placeholder--visible']}>

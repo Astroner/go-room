@@ -1,33 +1,41 @@
 import * as THREE from "three";
-import { AssetType, AssetsManager } from "./assets-manager.class";
-import { PreloadableScene } from "./preloadable-scene.class";
+import { AssetType } from "./assets-manager.class";
+import { PreloadableScene, createAssets } from "./preloadable-scene.class";
+import { StoneScene } from "./stone.scene";
 
-const assets = {
+const assets = createAssets({
     goBoard: {
-        type: AssetType.GLTF as AssetType.GLTF,
+        type: AssetType.GLTF,
         path: "/assets/go-board.glb"
     },
     desk: {
-        type: AssetType.GLTF as AssetType.GLTF,
+        type: AssetType.GLTF,
         path: "/assets/desk.glb"
     },
     chair: {
-        type: AssetType.GLTF as AssetType.GLTF,
+        type: AssetType.GLTF,
         path: "/assets/chair.glb"
     }
-}
+})
 
-export class GoScene extends PreloadableScene({ assets }) {
+export class GoScene extends PreloadableScene({ assets, dependencies: [StoneScene] }) {
     static async create(raycaster: THREE.Raycaster) {
         await GoScene.preload();
 
         return new GoScene(raycaster);
     }
 
-    private pendingStone = new THREE.Mesh(new THREE.BoxGeometry(.1, .1, .1), new THREE.MeshNormalMaterial())
-
+    private pendingStone = new StoneScene();
+    
     private bigBoard!: THREE.Mesh;
     private smallBoard!: THREE.Mesh;
+    private boardBox!: THREE.Box3;
+
+    private isWhite = false;
+    private gameData = {
+        x: 0,
+        y: 0
+    }; 
 
     constructor(private raycaster: THREE.Raycaster) {
         super();
@@ -46,6 +54,7 @@ export class GoScene extends PreloadableScene({ assets }) {
                 child.material.visible = false;
                 if(child.name === "big") {
                     this.bigBoard = child;
+                    this.boardBox = new THREE.Box3().setFromObject(child);
                 } else if(child.name === "small") {
                     this.smallBoard = child;
                 }
@@ -62,25 +71,35 @@ export class GoScene extends PreloadableScene({ assets }) {
         this.add(chair);
     }
 
+    mouseClick() {
+        const stone = new StoneScene(this.isWhite ? "white" : "black");
+        stone.position.copy(this.pendingStone.position);
+        this.add(stone);
+        
+        this.isWhite = !this.isWhite;
+        this.pendingStone.setColor(this.isWhite ? "white" : "black");
+    }
+
     updateMouse() {
         const [boardIntersection] = this.raycaster.intersectObject(this.bigBoard);
 
         if(boardIntersection) {
-            this.pendingStone.visible = true;
-            const boundingBox = new THREE.Box3().setFromObject(this.bigBoard);
-            
-            const width = boundingBox.max.x - boundingBox.min.x;
-            const height = boundingBox.max.z - boundingBox.min.z;
+            this.pendingStone.visible = true;            
+            const width = this.boardBox.max.x - this.boardBox.min.x;
+            const height = this.boardBox.max.z - this.boardBox.min.z;
 
-            const segmentWidth = width / (13 - 1);
-            const segmentHeight = height / (13 - 1);
-            
-            const newX = Math.round((boardIntersection.point.x - boundingBox.min.x) / segmentWidth) * segmentWidth;
-            const newZ = Math.round((boardIntersection.point.z - boundingBox.min.z) / segmentHeight) * segmentHeight;
+            const segmentWidth = width / (6);
+            const segmentHeight = height / (6);
 
-            this.pendingStone.position.x = boundingBox.min.x + newX;
+            this.gameData.x = Math.round((boardIntersection.point.x - this.boardBox.min.x) / segmentWidth);
+            this.gameData.y = Math.round((boardIntersection.point.z - this.boardBox.min.z) / segmentHeight);
+            
+            const newX = this.gameData.x * segmentWidth;
+            const newZ = this.gameData.y * segmentHeight;
+
+            this.pendingStone.position.x = this.boardBox.min.x + newX;
             this.pendingStone.position.y = boardIntersection.point.y;
-            this.pendingStone.position.z = boundingBox.min.z + newZ;
+            this.pendingStone.position.z = this.boardBox.min.z + newZ;
         } else {
             this.pendingStone.visible = false;
         }
