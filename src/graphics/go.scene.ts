@@ -3,6 +3,7 @@ import { AssetType } from "./assets-manager.class";
 import { PreloadableScene, createAssets } from "./preloadable-scene.class";
 import { StoneScene } from "./stone.scene";
 import { PendingStoneScene } from "./pending-stone.scene";
+import { CupScene } from "./cup.scene";
 
 const assets = createAssets({
     goBoard: {
@@ -23,7 +24,7 @@ const assets = createAssets({
     }
 })
 
-export class GoScene extends PreloadableScene({ assets, dependencies: [StoneScene, PendingStoneScene] }) {
+export class GoScene extends PreloadableScene({ assets, dependencies: [StoneScene, PendingStoneScene, CupScene] }) {
     static DEBUGGING = false;
 
     private pendingStone = new PendingStoneScene();
@@ -90,6 +91,15 @@ export class GoScene extends PreloadableScene({ assets, dependencies: [StoneScen
         const { scene: chair } = GoScene.assets.getAsset("chair");
         chair.position.set(0, 0, -5);
         this.add(chair);
+
+        const cup1 = new CupScene();
+        cup1.position.set(-3, 6.35, 1.5);
+        this.add(cup1);
+
+        const cup2 = new CupScene();
+        cup2.position.set(-3, 6.35, -1.5);
+        this.add(cup2);
+
 
         const listener = new THREE.AudioListener();
         this.placeStoneTrack = new THREE.Audio(listener);
