@@ -1,5 +1,6 @@
 import { FC, useEffect, useMemo, useState } from "react";
-import { Go, StoneColor } from "../go/go.class";
+import { Go } from "../go/go.class";
+import { StoneColor } from "../go/go.types";
 
 const CELL_SIZE = 100;
 const BOARD_SIZE = 9;
