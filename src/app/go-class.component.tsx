@@ -1,29 +1,32 @@
 import { FC, useEffect, useMemo, useState } from "react";
-import { Go } from "../go/go.class";
-import { StoneColor } from "../go/go.types";
+import { Go } from "../game/go/go.class";
+import { BoardSize, StoneColor } from "../game/game.types";
 
 const CELL_SIZE = 100;
-const BOARD_SIZE = 9;
 
-export const SimpleBoard: FC = () => {
-    const game = useMemo(() => new Go(BOARD_SIZE), []);
+export type GoClassProps = {
+    size: BoardSize
+}
+
+export const GoClass: FC<GoClassProps> = (props) => {
+    const game = useMemo(() => new Go(props.size), [props.size]);
     
     const [board, setBoard] = useState(() => game.getGameState());
 
     useEffect(() => {
         if(!game) return;
 
-        game.onStonePlaced = () => {
+        game.onStonePlace = () => {
             setBoard(game.getGameState());
         }
 
-        game.onStoneRemoved = () => {
+        game.onStonesRemove = () => {
             setBoard(game.getGameState());
         }
 
         return () => {
-            delete game.onStonePlaced;
-            delete game.onStoneRemoved;
+            delete game.onStonePlace;
+            delete game.onStonesRemove;
         }
     }, [game])
     

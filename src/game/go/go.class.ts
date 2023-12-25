@@ -1,11 +1,12 @@
+import { BoardSize, BoardSizeToNumber, Game, Point, StoneColor } from "../game.types";
 import { areBoardsEqual } from "./are-boards-equal";
 import { deleteGroup } from "./delete-group";
-import { Cell, Point, Group, StoneColor, Empty, Stone } from "./go.types";
+import { Cell, Group, Empty, Stone } from "./go.types";
 import { mergeGroupsAround } from "./merge-groups-around";
 import { pointToKey } from "./point-to-key";
 
 
-export class Go {
+export class Go implements Game {
     private ID_COUNTER = 0;
     private groups = new Map<number, Group>();
 
@@ -14,15 +15,24 @@ export class Go {
 
     private currentColor: StoneColor = StoneColor.BLACK;
 
-    onStonePlaced?: (color: StoneColor, x: number, y: number) => void;
-    onStoneRemoved?: (x: number, y: number) => void;
+    onStonePlace?: (color: StoneColor, x: number, y: number) => void;
+    onStonesRemove?: (remove: Point[]) => void;
     onStoneColorChange?: (nextColor: StoneColor) => void;
+    onGameError?: (err: string) => void;
 
-    constructor(private boardSize: number) {
-        this.board = new Array(boardSize).fill(null).map(() => new Array(boardSize).fill(null).map(() => ({
+    constructor(private boardSize: BoardSize) {
+        this.board = new Array(BoardSizeToNumber[boardSize]).fill(null).map(() => new Array(BoardSizeToNumber[boardSize]).fill(null).map(() => ({
             type: "empty",
             attachedGroups: new Map()
         })));
+    }
+
+    getBoardSize() {
+        return this.boardSize;
+    }
+
+    getBoard() {
+        return this.board.map(col => col.map(cell => cell.type === "empty" ? null : cell.color))
     }
 
     getCurrentColor() {
@@ -33,7 +43,7 @@ export class Go {
         return this.board[x][y].type === "empty";
     }
 
-    placeStone(x: number, y: number): void | Error {
+    async placeStone(x: number, y: number) {
         const current = this.board[x][y];
 
         if(!current || current.type !== "empty") return new Error("Place is already occupied");
@@ -85,12 +95,14 @@ export class Go {
             const suicideData = nextGroups.get(potentialSuicideGroup)!;
 
             if(suicideData.breath.size === 0) {
+                this.onGameError && this.onGameError("Forbidden suicidal move")
                 return new Error("Forbidden suicidal move");
             }
         }
 
         if(this.prevBoard) {
             if(areBoardsEqual(this.prevBoard, nextBoard)) {
+                this.onGameError && this.onGameError("Ko")
                 return new Error("Ko");
             }
         }
@@ -98,10 +110,8 @@ export class Go {
         this.prevBoard = this.board;
 
 
-        if(this.onStoneRemoved) {
-            for(const stone of deletedStones) {
-                this.onStoneRemoved(stone.x, stone.y);
-            }
+        if(this.onStonesRemove) {
+            this.onStonesRemove(deletedStones);
         }
 
         // console.group("Groups update")
@@ -112,7 +122,7 @@ export class Go {
         this.board = nextBoard;
         this.groups = nextGroups;
 
-        this.onStonePlaced && this.onStonePlaced(this.currentColor, x, y);
+        this.onStonePlace && this.onStonePlace(this.currentColor, x, y);
         this.switchColor();
         this.onStoneColorChange && this.onStoneColorChange(this.currentColor);
     }

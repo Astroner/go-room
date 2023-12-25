@@ -1,8 +1,10 @@
 import * as THREE from "three";
 
 import { OrbitControls } from "three/examples/jsm/controls/OrbitControls";
-import { AssetType, AssetsManager } from "./assets-manager.class";
 import { RoomScene } from "./room.scene";
+import { GoScene } from "./go.scene";
+import { Go } from "../game/go/go.class";
+import { BoardSize } from "../game/game.types";
 
 export class App {
     static DEBUGGING = false;
@@ -22,7 +24,7 @@ export class App {
 
     private raycaster = new THREE.Raycaster();
         
-    private room: RoomScene | null = null;
+    private goScene: GoScene | null = null;
 
     constructor(
         width: number,
@@ -30,6 +32,7 @@ export class App {
         canvas: HTMLCanvasElement,
     ) {
         if(App.DEBUGGING) {
+            GoScene.DEBUGGING = true;
             RoomScene.DEBUGGING = true;
         }
 
@@ -49,8 +52,17 @@ export class App {
         return new Promise<void>(async (resolve, reject) => {
             const scene = new THREE.Scene();
 
-            this.room = await RoomScene.create(this.raycaster);
-            scene.add(this.room);
+            await Promise.all([
+                GoScene.preload(),
+                RoomScene.preload()
+            ])
+
+            const game = new Go(BoardSize.S13);
+            this.goScene = new GoScene(this.raycaster, game);
+
+            
+            const room = new RoomScene(this.goScene);
+            scene.add(room);
 
             const controls = App.DEBUGGING ? new OrbitControls(this.camera, this.renderer.domElement) : null;
 
@@ -108,7 +120,7 @@ export class App {
     }
 
     mouseClick() {
-        if(this.room) this.room.mouseClick();
+        if(this.goScene) this.goScene.mouseClick();
     }
 
     setMouse(x: number, y: number) {
@@ -116,8 +128,8 @@ export class App {
 
         this.raycaster.setFromCamera(new THREE.Vector2(this.mouse.x * 2 - 1, this.mouse.y * -2 + 1), this.camera);
 
-        if(this.room) {
-            this.room.mouseChange();
+        if(this.goScene) {
+            this.goScene.updateMouse();
         }
     }
 }

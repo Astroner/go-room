@@ -1,12 +1,6 @@
-export enum StoneColor {
-    WHITE,
-    BLACK
-}
+import { Point, StoneColor } from "../game.types";
 
-export type Point = {
-    x: number,
-    y: number
-};
+
 
 export type Group = {
     id: number,

@@ -1,4 +1,5 @@
-import { Cell, Group, Point } from "./go.types";
+import { Point } from "../game.types";
+import { Cell, Group } from "./go.types";
 import { pointToKey } from "./point-to-key";
 
 export const deleteGroup = (board: Cell[][], groups: Map<number, Group>, groupToDelete: Group): Point[] => {

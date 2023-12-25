@@ -1,4 +1,4 @@
-FROM node:18-alpine
+FROM node:18-alpine as BUILD
 
 WORKDIR /app
 
@@ -12,5 +12,6 @@ COPY . .
 ENV NODE_ENV=production
 RUN npm run build
 
-EXPOSE 3000
-CMD ["yarn", "start"]
+FROM nginx:latest
+COPY nginx.conf /etc/nginx/nginx.conf
+COPY --from=BUILD /app/out /build

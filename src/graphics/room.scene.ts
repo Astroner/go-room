@@ -1,7 +1,6 @@
 import * as THREE from "three";
-import { AssetType, AssetsManager } from "./assets-manager.class";
+import { AssetType } from "./assets-manager.class";
 
-import { GoScene } from "./go.scene";
 import { PreloadableScene, createAssets } from "./preloadable-scene.class";
 
 const assets = createAssets({
@@ -11,24 +10,20 @@ const assets = createAssets({
     }
 })
 
-export class RoomScene extends PreloadableScene({ assets, dependencies: [GoScene] }) {
+export class RoomScene extends PreloadableScene({ assets }) {
     static DEBUGGING = false;
 
-    static async create(rayCaster: THREE.Raycaster) {
+    static async create(goScene: THREE.Object3D) {
         await RoomScene.preload()
 
-        return new RoomScene(rayCaster);
+        return new RoomScene(goScene);
     }
 
-    private goScene: GoScene;
-
-    constructor(rayCaster: THREE.Raycaster) {
+    constructor(
+        private goScene: THREE.Object3D
+    ) {
         super();
-        if(RoomScene.DEBUGGING) {
-            GoScene.DEBUGGING = true;
-        }
-
-        this.goScene = new GoScene(rayCaster);
+        
         this.add(this.goScene);
 
         const room = RoomScene.assets.getAsset("room");
@@ -52,13 +47,5 @@ export class RoomScene extends PreloadableScene({ assets, dependencies: [GoScene
             this.add(helper);
         }
 
-    }
-
-    mouseChange() {
-        this.goScene.updateMouse();
-    }
-
-    mouseClick() {
-        if(this.goScene) this.goScene.mouseClick();
     }
 }

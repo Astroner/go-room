@@ -1,4 +1,5 @@
-import { Cell, Group, Point } from "./go.types";
+import { Point } from "../game.types";
+import { Cell, Group } from "./go.types";
 
 export const mergeGroupsAround = (board: Cell[][], groups: Map<number, Group>, sameColorGroups: number[], x: number, y: number): number => {
     const center = board[x][y];
