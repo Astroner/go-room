@@ -15,3 +15,4 @@ RUN npm run build
 FROM nginx:latest
 COPY nginx.conf /etc/nginx/nginx.conf
 COPY --from=BUILD /app/out /build
+EXPOSE 80
