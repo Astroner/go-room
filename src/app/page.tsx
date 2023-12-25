@@ -4,6 +4,7 @@ import { FC, useEffect, useMemo, useRef, useState } from "react";
 import { App } from "../graphics/app.class";
 
 import cn from "./page.module.scss";
+import { SimpleBoard } from "./simple-board";
 
 const MainPage: FC = () => {
     const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -56,6 +57,7 @@ const MainPage: FC = () => {
     }, [app, mousePos])
 
     return (
+        // <SimpleBoard />
         <div 
             ref={containerRef} 
             className={cn.root} 

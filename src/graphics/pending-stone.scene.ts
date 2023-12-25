@@ -1,6 +1,7 @@
 import * as THREE from "three";
 import { PreloadableScene } from "./preloadable-scene.class";
 import { StoneScene } from "./stone.scene";
+import { StoneColor } from "../go/go.types";
 
 export class PendingStoneScene extends PreloadableScene({ dependencies: [StoneScene] }) {
     private stone = new StoneScene(undefined, true);
@@ -11,7 +12,7 @@ export class PendingStoneScene extends PreloadableScene({ dependencies: [StoneSc
         this.add(this.stone);
     }
 
-    setColor(color: "black" | "white") {
+    setColor(color: StoneColor) {
         this.stone.setColor(color);
     }
 }

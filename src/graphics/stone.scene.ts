@@ -1,5 +1,6 @@
 import * as THREE from "three";
 import { AssetType, createAssets, PreloadableScene } from "./preloadable-scene.class";
+import { StoneColor } from "../go/go.types";
 
 const assets = createAssets({
     stone: {
@@ -11,7 +12,7 @@ const assets = createAssets({
 export class StoneScene extends PreloadableScene({ assets }) {
     private stone: THREE.Mesh<THREE.BufferGeometry, THREE.MeshStandardMaterial>;
 
-    constructor(color: "black" | "white" = "black", transparent: boolean = false, disableShadow = false) {
+    constructor(color: StoneColor = StoneColor.BLACK, transparent: boolean = false, disableShadow = false) {
         super();
 
         const mesh = StoneScene.assets.getAsset("stone").scene.children[0];
@@ -25,7 +26,7 @@ export class StoneScene extends PreloadableScene({ assets }) {
             material.opacity = .3;
         }
 
-        if(color === "white") {
+        if(color === StoneColor.WHITE) {
             material.color.set(0xffffff);
         } else {
             material.color.set(0x000000);
@@ -41,8 +42,8 @@ export class StoneScene extends PreloadableScene({ assets }) {
         this.add(this.stone)
     }
 
-    setColor(color: "black" | "white") {
-        if(color === "white") {
+    setColor(color: StoneColor) {
+        if(color === StoneColor.WHITE) {
             this.stone.material.color.set(0xffffff);
         } else {
             this.stone.material.color.set(0x000000);

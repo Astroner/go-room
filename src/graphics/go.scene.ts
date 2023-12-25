@@ -4,6 +4,7 @@ import { PreloadableScene, createAssets } from "./preloadable-scene.class";
 import { StoneScene } from "./stone.scene";
 import { PendingStoneScene } from "./pending-stone.scene";
 import { CupScene } from "./cup.scene";
+import { Go } from "../go/go.class";
 
 const assets = createAssets({
     goBoard: {
@@ -27,22 +28,39 @@ const assets = createAssets({
 export class GoScene extends PreloadableScene({ assets, dependencies: [StoneScene, PendingStoneScene, CupScene] }) {
     static DEBUGGING = false;
 
+    private game = new Go(13);
+    private boardCursor = {
+        x: 0,
+        y: 0
+    };
+    
     private pendingStone = new PendingStoneScene();
+    private stonesMap = new Map<string, StoneScene>();
     
     private bigBoard!: THREE.Mesh;
     private smallBoard!: THREE.Mesh;
     private boardBox!: THREE.Box3;
 
-    private isWhite = false;
-    private gameData = {
-        x: 0,
-        y: 0
-    }; 
-
     private placeStoneTrack: THREE.Audio;
+
 
     constructor(private raycaster: THREE.Raycaster) {
         super();
+        
+        this.game.onStoneColorChange = (color) => {
+            this.pendingStone.setColor(color)
+        }
+        this.game.onStonePlaced = (color, x, y) => {
+            const stone = new StoneScene(color);
+            stone.position.copy(this.pendingStone.position);
+            this.add(stone);
+            this.stonesMap.set(`${x} ${y}`, stone);
+            this.placeStoneTrack.play();
+        }
+        this.game.onStoneRemoved = (x, y) => {
+            this.stonesMap.get(`${x} ${y}`)?.removeFromParent();
+            this.stonesMap.delete(`${x} ${y}`);
+        }
 
         this.pendingStone.visible = false;
         this.add(this.pendingStone);
@@ -108,32 +126,39 @@ export class GoScene extends PreloadableScene({ assets, dependencies: [StoneScen
     }
 
     mouseClick() {
-        const stone = new StoneScene(this.isWhite ? "white" : "black");
-        stone.position.copy(this.pendingStone.position);
-        this.add(stone);
-        
-        this.isWhite = !this.isWhite;
-        this.pendingStone.setColor(this.isWhite ? "white" : "black");
-
-        this.placeStoneTrack.play();
+        if(!this.pendingStone.visible) return;
+        const error = this.game.placeStone(this.boardCursor.x, this.boardCursor.y);
+        if(error) {
+            console.log(error);
+        } else {
+            this.pendingStone.visible = false;
+        }
     }
 
     updateMouse() {
         const [boardIntersection] = this.raycaster.intersectObject(this.bigBoard);
 
         if(boardIntersection) {
-            this.pendingStone.visible = true;            
             const width = this.boardBox.max.x - this.boardBox.min.x;
             const height = this.boardBox.max.z - this.boardBox.min.z;
 
             const segmentWidth = width / (6);
             const segmentHeight = height / (6);
 
-            this.gameData.x = Math.round((boardIntersection.point.x - this.boardBox.min.x) / segmentWidth);
-            this.gameData.y = Math.round((boardIntersection.point.z - this.boardBox.min.z) / segmentHeight);
+            const boardX = Math.round((boardIntersection.point.x - this.boardBox.min.x) / segmentWidth);
+            const boardZ = Math.round((boardIntersection.point.z - this.boardBox.min.z) / segmentHeight);
             
-            const newX = this.gameData.x * segmentWidth;
-            const newZ = this.gameData.y * segmentHeight;
+            const newX = boardX * segmentWidth;
+            const newZ = boardZ * segmentHeight;
+
+            this.boardCursor = {
+                x: boardX + 3,
+                y: boardZ + 3,
+            }
+
+            this.pendingStone.visible = this.game.isEmpty(this.boardCursor.x, this.boardCursor.y);
+
+            if(!this.pendingStone.visible) return;
 
             this.pendingStone.position.x = this.boardBox.min.x + newX;
             this.pendingStone.position.y = boardIntersection.point.y + .05;
