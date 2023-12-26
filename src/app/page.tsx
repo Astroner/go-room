@@ -5,7 +5,7 @@ import { App } from "../graphics/app.class";
 
 import cn from "./page.module.scss";
 import { BoardSize } from "../game/game.types";
-import { useSearchParams } from "../helpers/use-search-params";
+import { useClientSearchParams } from "../helpers/use-client-search-params";
 
 const MainPage: FC = () => {
     const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -16,7 +16,7 @@ const MainPage: FC = () => {
 
     const [isVisible, setIsVisible] = useState(false);
 
-    const params = useSearchParams();
+    const params = useClientSearchParams();
     
     const boardSize = useMemo(() => {
         const size = params.get("size");
