@@ -4,7 +4,8 @@ import { FC, useEffect, useMemo, useRef, useState } from "react";
 import { App } from "../graphics/app.class";
 
 import cn from "./page.module.scss";
-// import { GoClass } from "./go-class.component";
+import { useSearchParams } from "next/navigation";
+import { BoardSize } from "../game/game.types";
 
 const MainPage: FC = () => {
     const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -14,6 +15,18 @@ const MainPage: FC = () => {
     const [mousePos, setMousePos] = useState({ x: 0.5, y: .5 })
 
     const [isVisible, setIsVisible] = useState(false);
+
+    const params = useSearchParams();
+    
+    const boardSize = useMemo(() => {
+        const size = params.get("size");
+        switch(size) {
+            case "9": return BoardSize.S9;
+            default:
+                return BoardSize.S13;
+        }
+
+    }, [params])
 
     useEffect(() => {
         const canvas = canvasRef.current;
@@ -35,7 +48,7 @@ const MainPage: FC = () => {
         const container = containerRef.current;
         if(!app || !container) return;
 
-        app.start()
+        app.start(boardSize)
             .then(() => setIsVisible(true))
 
         const handler = () => {
@@ -49,7 +62,7 @@ const MainPage: FC = () => {
 
             window.removeEventListener('resize', handler);
         }
-    }, [app])
+    }, [app, boardSize])
 
     useEffect(() => {
         if(!app) return;
@@ -57,7 +70,6 @@ const MainPage: FC = () => {
     }, [app, mousePos])
 
     return (
-        // <SimpleBoard />
         <div 
             ref={containerRef} 
             className={cn.root} 

@@ -24,9 +24,12 @@ export const GoClass: FC<GoClassProps> = (props) => {
             setBoard(game.getGameState());
         }
 
+        game.onGameError = text => alert(text);
+
         return () => {
             delete game.onStonePlace;
             delete game.onStonesRemove;
+            delete game.onGameError;
         }
     }, [game])
     

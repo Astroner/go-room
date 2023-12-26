@@ -48,7 +48,7 @@ export class App {
         this.renderer.shadowMap.type = THREE.PCFSoftShadowMap;
     }
 
-    start() {
+    start(boardSize: BoardSize) {
         return new Promise<void>(async (resolve, reject) => {
             const scene = new THREE.Scene();
 
@@ -57,7 +57,7 @@ export class App {
                 RoomScene.preload()
             ])
 
-            const game = new Go(BoardSize.S13);
+            const game = new Go(boardSize);
             this.goScene = new GoScene(this.raycaster, game);
 
             

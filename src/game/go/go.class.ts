@@ -87,7 +87,9 @@ export class Go implements Game {
         const deletedStones: Point[] = [];
         for(const groupToDelete of nextGroups.values()) {
             if(groupToDelete.breath.size > 0) continue;
-            if(groupToDelete.id === potentialSuicideGroup) continue;
+            if(groupToDelete.id === potentialSuicideGroup) {
+                continue;
+            }
             deletedStones.push(...deleteGroup(nextBoard, nextGroups, groupToDelete));
         }
 
@@ -134,11 +136,11 @@ export class Go implements Game {
     private getDefaultBreathPointsNumber(x: number, y: number) {
         let result = 4;
 
-        if(x === 0 || x === this.boardSize - 1) {
+        if(x === 0 || x === BoardSizeToNumber[this.boardSize] - 1) {
             result -= 1;
         }
 
-        if(y === 0 || y === this.boardSize - 1) {
+        if(y === 0 || y === BoardSizeToNumber[this.boardSize] - 1) {
             result -= 1;
         }
 
