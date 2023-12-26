@@ -6,7 +6,7 @@ import { BoardSize } from "@/src/game/game.types";
 import { useSearchParams } from "next/navigation";
 
 
-export const ClassTest: FC = () => {
+const ClassTest: FC = () => {
 
     const params = useSearchParams();
     
