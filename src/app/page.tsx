@@ -4,8 +4,8 @@ import { FC, useEffect, useMemo, useRef, useState } from "react";
 import { App } from "../graphics/app.class";
 
 import cn from "./page.module.scss";
-import { useSearchParams } from "next/navigation";
 import { BoardSize } from "../game/game.types";
+import { useSearchParams } from "../helpers/use-search-params";
 
 const MainPage: FC = () => {
     const canvasRef = useRef<HTMLCanvasElement>(null);
