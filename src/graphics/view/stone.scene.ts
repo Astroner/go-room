@@ -1,6 +1,6 @@
 import * as THREE from "three";
 import { AssetType, createAssets, PreloadableScene } from "./preloadable-scene.class";
-import { StoneColor } from "../game/game.types";
+import { StoneColor } from "../../game/game.types";
 
 const assets = createAssets({
     stone: {

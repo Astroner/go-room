@@ -1,135 +1,69 @@
-import * as THREE from "three";
-
-import { OrbitControls } from "three/examples/jsm/controls/OrbitControls";
-import { RoomScene } from "./room.scene";
-import { GoScene } from "./go.scene";
-import { Go } from "../game/go/go.class";
-import { BoardSize } from "../game/game.types";
+import { Game } from "../game/game.types";
+import { Subscription } from "./mvvm.types";
+import { ViewModel } from "./view-model";
+import { CanvasView } from "./view/canvas.view";
 
 export class App {
-    static DEBUGGING = false;
-
-    static CAMERA_DEFAULT_X_ROTATION = -.7;
-    static CAMERA_X_ROTATION_AVAILABLE = Math.PI / 30;
-    static CAMERA_X_ROTATION_SPEED_RATIO = 0.015;
-
-    static CAMERA_DEFAULT_Y_ROTATION = 0;
-    static CAMERA_Y_ROTATION_AVAILABLE = Math.PI / 40;
-    static CAMERA_Y_ROTATION_SPEED_RATIO = 0.015;
-
-    private mouse = new THREE.Vector2(.5, .5);
-
-    private camera: THREE.PerspectiveCamera;
-    private renderer: THREE.WebGLRenderer;
-
-    private raycaster = new THREE.Raycaster();
-        
-    private goScene: GoScene | null = null;
-
-    constructor(
-        width: number,
-        height: number,
-        canvas: HTMLCanvasElement,
-    ) {
-        if(App.DEBUGGING) {
-            GoScene.DEBUGGING = true;
-            RoomScene.DEBUGGING = true;
-        }
-
-        this.camera = new THREE.PerspectiveCamera(45, width / height);
-        this.camera.position.set(0, 12, 6);
-
-        this.camera.rotation.set(App.CAMERA_DEFAULT_X_ROTATION, 0, 0);
-
-        this.renderer = new THREE.WebGLRenderer({ canvas, antialias: true });
-        this.renderer.setClearColor(0xfe9380)
-        this.renderer.setSize(width, height)
-        this.renderer.shadowMap.enabled = true;
-        this.renderer.shadowMap.type = THREE.PCFSoftShadowMap;
-    }
-
-    start(boardSize: BoardSize) {
-        return new Promise<void>(async (resolve, reject) => {
-            const scene = new THREE.Scene();
-
-            await Promise.all([
-                GoScene.preload(),
-                RoomScene.preload()
-            ])
-
-            const game = new Go(boardSize);
-            this.goScene = new GoScene(this.raycaster, game);
-
-            
-            const room = new RoomScene(this.goScene);
-            scene.add(room);
-
-            const controls = App.DEBUGGING ? new OrbitControls(this.camera, this.renderer.domElement) : null;
-
-            let once = false;
-            this.renderer.setAnimationLoop((data, ss) => {
-                this.renderer.render(scene, this.camera);
-                if(!once) {
-                    once = true;
-                    resolve();
-                }
+    private view: CanvasView;
     
-                this.tick();
+    private subs: Subscription[] = [];
+    private vm: ViewModel | null = null;
 
-                controls?.update();
-            })
-        })
+    constructor(canvas: HTMLCanvasElement, width: number, height: number) {
+        this.view = new CanvasView(width, height, canvas);
     }
 
-    private tick(){
-        {
-            let targetAngle;
-            if(this.mouse.y < .2 || this.mouse.y > .8) {
-                targetAngle = App.CAMERA_DEFAULT_X_ROTATION + (this.mouse.y * -2 + 1) * App.CAMERA_X_ROTATION_AVAILABLE;
-            } else {
-                targetAngle = App.CAMERA_DEFAULT_X_ROTATION;
-            }
+    async start(game: Game) {
+        const vm = new ViewModel(game);
 
-            const diff = targetAngle - this.camera.rotation.x;
+        this.subs.push(
+            this.view.onBoardClick((x, y) => {
+                vm.boardClick(x, y);
+            })
+        )
+        
+        this.subs.push(
+            vm.onError((err) => {
+                console.log(err);
+            })
+        )
 
-            this.camera.rotation.x += diff * App.CAMERA_X_ROTATION_SPEED_RATIO;
-        }
+        this.subs.push(
+            vm.onStoneColorChange((color) => {
+                this.view.setCurrentColor(color);
+            })
+        )
 
-        {
-            let targetAngle;
-            if(this.mouse.x < .2 || this.mouse.x > .8) {
-                targetAngle = App.CAMERA_DEFAULT_Y_ROTATION + (this.mouse.x * -2 + 1) * App.CAMERA_Y_ROTATION_AVAILABLE;
-            } else {
-                targetAngle = App.CAMERA_DEFAULT_Y_ROTATION;
-            }
+        this.subs.push(
+            vm.onStonePlaced((color, x, y) => {
+                this.view.addStone(color, x, y);
+            })
+        )
 
-            const diff = targetAngle - this.camera.rotation.y;
+        this.subs.push(
+            vm.onStonesRemoved((stones) => {
+                this.view.removeStones(stones);
+            })
+        )
 
-            this.camera.rotation.y += diff * App.CAMERA_Y_ROTATION_SPEED_RATIO;
-        }
+        this.vm = vm;
+
+        await this.view.init(game.getBoardSize());
     }
 
     stop() {
-        this.renderer.dispose();
+        this.view.destroy();
+        
+        if(this.vm) {
+            this.vm.destroy();
+        }
+
+        for(const sub of this.subs) {
+            sub.unsubscribe();
+        }
     }
 
     setSize(width: number, height: number) {
-        this.camera.aspect = width / height;
-        this.camera.updateProjectionMatrix();
-        this.renderer.setSize(width, height);
-    }
-
-    mouseClick() {
-        if(this.goScene) this.goScene.mouseClick();
-    }
-
-    setMouse(x: number, y: number) {
-        this.mouse.set(x, y);
-
-        this.raycaster.setFromCamera(new THREE.Vector2(this.mouse.x * 2 - 1, this.mouse.y * -2 + 1), this.camera);
-
-        if(this.goScene) {
-            this.goScene.updateMouse();
-        }
+        this.view.setSize(width, height);
     }
 }

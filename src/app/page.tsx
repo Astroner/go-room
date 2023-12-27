@@ -6,6 +6,7 @@ import { App } from "../graphics/app.class";
 import cn from "./page.module.scss";
 import { BoardSize } from "../game/game.types";
 import { useClientSearchParams } from "../helpers/use-client-search-params";
+import { Go } from "../game/go/go.class";
 
 const MainPage: FC = () => {
     const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -34,9 +35,9 @@ const MainPage: FC = () => {
         if(!canvas || !container) return;
 
         setApp(new App(
+            canvas,
             container.clientWidth,
             container.clientHeight,
-            canvas
         ))
         
         return () => {
@@ -48,7 +49,9 @@ const MainPage: FC = () => {
         const container = containerRef.current;
         if(!app || !container) return;
 
-        app.start(boardSize)
+        const game = new Go(boardSize);
+
+        app.start(game)
             .then(() => setIsVisible(true))
 
         const handler = () => {
@@ -64,20 +67,11 @@ const MainPage: FC = () => {
         }
     }, [app, boardSize])
 
-    useEffect(() => {
-        if(!app) return;
-        app.setMouse(mousePos.x, mousePos.y)
-    }, [app, mousePos])
 
     return (
         <div 
             ref={containerRef} 
             className={cn.root} 
-            onMouseMove={e => setMousePos({
-                x: e.pageX / (e.target as HTMLDivElement).clientWidth,
-                y: e.pageY / (e.target as HTMLDivElement).clientHeight
-            })}
-            onClick={() => app?.mouseClick()}
         >
             {
                 <div className={isVisible ? cn['placeholder--hidden'] : cn['placeholder--visible']}>
