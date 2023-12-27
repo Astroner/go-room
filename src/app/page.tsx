@@ -1,12 +1,12 @@
 "use client"
 
 import { FC, useEffect, useMemo, useRef, useState } from "react";
+
+import { BoardSize } from "../game/game.types";
+import { useClientSearchParams } from "../helpers/use-client-search-params";
 import { App } from "../graphics/app.class";
 
 import cn from "./page.module.scss";
-import { BoardSize } from "../game/game.types";
-import { useClientSearchParams } from "../helpers/use-client-search-params";
-import { Go } from "../game/go/go.class";
 
 const MainPage: FC = () => {
     const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -49,9 +49,7 @@ const MainPage: FC = () => {
         const container = containerRef.current;
         if(!app || !container) return;
 
-        const game = new Go(boardSize);
-
-        app.start(game)
+        app.start(boardSize)
             .then(() => setIsVisible(true))
 
         const handler = () => {

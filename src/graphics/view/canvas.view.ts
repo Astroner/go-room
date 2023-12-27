@@ -5,9 +5,9 @@ import { BoardSize, Point, StoneColor } from "@/src/game/game.types";
 
 import { GoScene } from "./go.scene";
 import { RoomScene } from "./room.scene";
-import { Subscription } from "../mvvm.types";
+import { Subscription, View } from "../mvc.types";
 
-export class CanvasView {
+export class CanvasView implements View {
     static DEBUGGING = false;
 
     static CAMERA_DEFAULT_X_ROTATION = -.7;
@@ -121,13 +121,13 @@ export class CanvasView {
         this.renderer.dispose();
     }
 
-    async addStone(color: StoneColor, x: number, y: number) {
+    addStone(color: StoneColor, x: number, y: number) {
         if(!this.goScene) return;
 
         this.goScene.addStone(color, x, y);
     }
 
-    async removeStones(stones: Point[]) {
+    removeStones(stones: Point[]) {
         if(!this.goScene) return;
 
         this.goScene.removeStones(stones);
